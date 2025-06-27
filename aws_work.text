@@ -1,0 +1,3 @@
+After spliting large json file into small file.
+i created aws account and login as IAM User.
+create s3 bucket and upload json file in s3 bucket
