@@ -1,0 +1,64 @@
+create snowflake account and login 
+create AWS_KEY_ID and AWS_SECRET_KEY in aws and using these copy json file data into table
+
+create table yelp_reviews(review_text variant)
+
+COPY INTO yelp_reviews
+from 's3://sapmitra/yelp/'
+CREDENTIALS = (
+AWS_KEY_ID='######'
+AWS_SECRET_KEY ='#########'
+
+
+)
+FILE_FORMAT =(TYPE=JSON  STRIP_OUTER_ARRAY = TRUE)
+ON_ERROR = 'CONTINUE'
+;
+
+after that extract data from json format and create new table
+
+and create sentimental column using python
+------------function-------------------------
+
+CREATE OR REPLACE FUNCTION analyze_sentiment(text STRING)
+RETURNS STRING
+LANGUAGE PYTHON
+RUNTIME_VERSION = '3.9'
+PACKAGES = ('textblob') 
+HANDLER = 'sentiment_analyzer'
+AS $$
+from textblob import TextBlob
+def sentiment_analyzer(text):
+    analysis = TextBlob(text)
+    if analysis.sentiment.polarity > 0:
+        return 'Positive'
+    elif analysis.sentiment.polarity == 0:
+        return 'Neutral'
+    else:
+        return 'Negative'
+$$;
+
+
+-------------------
+
+create or replace table  tbl_yelp_reviews
+as
+SELECT 
+REVIEW_TEXT:business_id::string as business_id,
+review_text:date::date as review_date,
+review_text:stars::number as review_stars,
+review_text:text::string as review_text,
+analyze_sentiment(review_text) as sentiments
+
+FROM yelp_reviews 
+
+select *  from tbl_yelp_reviews LIMIT 100
+
+
+select * from yelp_reviews limit 10
+
+
+
+
+
+
